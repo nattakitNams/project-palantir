@@ -18,7 +18,11 @@ from shapely import wkt
 import json
 
 # Set page config
-st.set_page_config(layout="wide", page_title="Project Palantir")
+st.set_page_config(
+    layout="wide", 
+    page_title="Project Palantir",
+    initial_sidebar_state="expanded"  # Open sidebar by default (helps mobile users)
+)
 
 # Initialize session state for results persistence
 if 'analysis_results' not in st.session_state:
@@ -51,7 +55,7 @@ VI_INFO = {
 }
 
 # Sidebar Configuration
-st.sidebar.image("logo.png", use_container_width=True)
+# st.sidebar.image("logo.png", use_container_width=True)  # Logo removed - file not included
 st.sidebar.title("Project Palantir")
 st.sidebar.info("Source: Microsoft Planetary Computer (Sentinel-2 L2A)")
 
@@ -170,7 +174,34 @@ Draw(export=False, position='topleft', draw_options=draw_options).add_to(m)
 if 'map_key' not in st.session_state:
     st.session_state.map_key = 0
 
-map_output = st_folium(m, height=700, width=None, returned_objects=['last_active_drawing'], key=f"map_{st.session_state.map_key}")
+# Add mobile-specific CSS for better UX
+st.markdown("""
+<style>
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    /* Reduce map height on mobile */
+    iframe[title="streamlit_folium.st_folium"] {
+        height: 400px !important;
+    }
+    
+    /* Ensure sidebar is visible on mobile */
+    section[data-testid="stSidebar"] {
+        display: block !important;
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Set map height based on device (smaller on mobile)
+map_height = 400 if st.session_state.get('is_mobile', False) else 700
+
+map_output = st_folium(
+    m, 
+    height=map_height,
+    width=None, 
+    returned_objects=['last_active_drawing'], 
+    key=f"map_{st.session_state.map_key}"
+)
 
 # Extract AOI from map drawing
 bbox = None
