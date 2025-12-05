@@ -1,0 +1,17 @@
+streamlit
+leafmap
+streamlit-folium
+pystac-client
+planetary-computer
+stackstac
+xarray
+rioxarray
+pandas
+plotly
+shapely
+geopandas
+dask
+toolz
+matplotlib
+Pillow
+pyproj
