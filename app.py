@@ -55,7 +55,7 @@ VI_INFO = {
 }
 
 # Sidebar Configuration
-# st.sidebar.image("logo.png", use_container_width=True)  # Logo removed - file not included
+st.sidebar.image("logo.png", use_container_width=True)
 st.sidebar.title("Project Palantir")
 st.sidebar.info("Source: Microsoft Planetary Computer (Sentinel-2 L2A)")
 
