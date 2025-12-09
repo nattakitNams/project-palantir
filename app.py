@@ -125,8 +125,8 @@ if uploaded_kml is not None:
             from shapely.geometry import shape
             shp = shape(geometry)
             st.session_state.aoi_wkt = shp.wkt
-            st.success("✓ KML file loaded successfully!")
-            st.rerun()
+            st.success(f"✓ KML file '{uploaded_kml.name}' loaded successfully!")
+            # Don't rerun - let the text area show updated coordinates
         else:
             st.error("Could not parse KML file. Please check the file format.")
     except Exception as e:
