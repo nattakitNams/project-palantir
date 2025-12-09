@@ -98,7 +98,7 @@ if 'current_geometry' not in st.session_state:
     st.session_state.current_geometry = None
 
 st.write("### 1. Define Area of Interest (AOI)")
-st.info("**Method 1**: Paste WKT/GeoJSON coordinates below | **Method 2**: Draw on the map")
+st.info("**Method 1**: Paste WKT/GeoJSON coordinates | **Method 2**: Draw on map | **Method 3**: Upload KML file")
 
 # Prominent text input for coordinates
 coord_input = st.text_area(
@@ -107,6 +107,30 @@ coord_input = st.text_area(
     placeholder="Example: POLYGON ((100.5 13.7, 100.6 13.7, 100.6 13.8, 100.5 13.8, 100.5 13.7))",
     height=80
 )
+
+# KML File Upload
+uploaded_kml = st.file_uploader(
+    "Or upload KML file",
+    type=['kml'],
+    help="Upload a KML file containing your area of interest"
+)
+
+if uploaded_kml is not None:
+    try:
+        kml_content = uploaded_kml.read()
+        geometry = utils.parse_kml_to_geometry(kml_content)
+        if geometry:
+            st.session_state.current_geometry = geometry
+            # Update WKT display
+            from shapely.geometry import shape
+            shp = shape(geometry)
+            st.session_state.aoi_wkt = shp.wkt
+            st.success("✓ KML file loaded successfully!")
+            st.rerun()
+        else:
+            st.error("Could not parse KML file. Please check the file format.")
+    except Exception as e:
+        st.error(f"Error reading KML file: {e}")
 
 # Parse coordinates if changed
 if coord_input != st.session_state.aoi_wkt:
@@ -454,6 +478,32 @@ if st.session_state.analysis_results:
                                 )
                 else:
                     st.error("Raw band data not found in results.")
+            
+            # 5. KML Boundary Export
+            with st.container():
+                st.markdown("##### 5. KML Boundary Export")
+                st.caption("Download polygon boundary as KML for Google Earth/Maps")
+                
+                if 'geometry' in results and results['geometry']:
+                    kml_content = utils.geometry_to_kml(
+                        results['geometry'],
+                        name=f"{results['selected_VI']} AOI",
+                        description=f"Area of Interest for {results['selected_vi']} analysis on {results['item_date']}"
+                    )
+                    
+                    if kml_content:
+                        st.download_button(
+                            label="Download KML Boundary",
+                            data=kml_content,
+                            file_name=f'boundary_{results["selected_vi"]}_{results["item_date"]}.kml',
+                            mime='application/vnd.google-earth.kml+xml',
+                            key=f'dl_kml_{key_suffix}',
+                            use_container_width=True
+                        )
+                    else:
+                        st.error("Could not generate KML file.")
+                else:
+                    st.warning("No geometry available for KML export.")
 
 
 

@@ -427,3 +427,133 @@ def export_bands_geotiff(bands_dict):
     return export_geotiff(stacked)
 
     return export_geotiff(stacked)
+def parse_kml_to_geometry(kml_content):
+    """
+    Parse KML file content and return GeoJSON geometry
+    
+    Parameters:
+    -----------
+    kml_content : bytes or str
+        KML file content
+        
+    Returns:
+    --------
+    dict or None
+        GeoJSON geometry dictionary or None if parsing fails
+    """
+    import xml.etree.ElementTree as ET
+    from shapely.geometry import Polygon, mapping
+    
+    try:
+        # Decode if bytes
+        if isinstance(kml_content, bytes):
+            kml_content = kml_content.decode('utf-8')
+        
+        # Parse XML
+        root = ET.fromstring(kml_content)
+        
+        # Define KML namespace
+        ns = {'kml': 'http://www.opengis.net/kml/2.2'}
+        
+        # Try to find Polygon coordinates
+        coords_elem = root.find('.//kml:Polygon/kml:outerBoundaryIs/kml:LinearRing/kml:coordinates', ns)
+        
+        # Also try without namespace (some KML files don't use it)
+        if coords_elem is None:
+            coords_elem = root.find('.//Polygon/outerBoundaryIs/LinearRing/coordinates')
+        
+        if coords_elem is None:
+            # Try Placemark/Polygon pattern
+            coords_elem = root.find('.//Placemark/Polygon/outerBoundaryIs/LinearRing/coordinates')
+        
+        if coords_elem is not None and coords_elem.text:
+            # Parse coordinates (format: lon,lat,alt or lon,lat)
+            coords_text = coords_elem.text.strip()
+            coord_pairs = []
+            
+            for coord in coords_text.split():
+                parts = coord.split(',')
+                if len(parts) >= 2:
+                    lon, lat = float(parts[0]), float(parts[1])
+                    coord_pairs.append((lon, lat))
+            
+            if len(coord_pairs) >= 3:  # Need at least 3 points for a polygon
+                # Create Shapely Polygon
+                poly = Polygon(coord_pairs)
+                # Convert to GeoJSON
+                return mapping(poly)
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error parsing KML: {e}")
+        return None
+
+
+def geometry_to_kml(geometry, name="AOI Boundary", description="Area of Interest"):
+    """
+    Convert GeoJSON geometry to KML format
+    
+    Parameters:
+    -----------
+    geometry : dict
+        GeoJSON geometry dictionary
+    name : str
+        Name of the placemark
+    description : str
+        Description of the placemark
+        
+    Returns:
+    --------
+    str
+        KML formatted string
+    """
+    from shapely.geometry import shape
+    
+    try:
+        # Convert to Shapely geometry
+        geom = shape(geometry)
+        
+        # Get coordinates
+        if geom.geom_type == 'Polygon':
+            coords = list(geom.exterior.coords)
+        else:
+            return None
+        
+        # Build KML string
+        kml_coords = ' '.join([f"{lon},{lat},0" for lon, lat in coords])
+        
+        kml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>{name}</name>
+    <Placemark>
+      <name>{name}</name>
+      <description>{description}</description>
+      <Style>
+        <LineStyle>
+          <color>ff0000ff</color>
+          <width>2</width>
+        </LineStyle>
+        <PolyStyle>
+          <color>3f0000ff</color>
+        </PolyStyle>
+      </Style>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              {kml_coords}
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>"""
+        
+        return kml
+        
+    except Exception as e:
+        print(f"Error creating KML: {e}")
+        return None
