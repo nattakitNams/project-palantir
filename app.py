@@ -487,7 +487,7 @@ if st.session_state.analysis_results:
                 if 'geometry' in results and results['geometry']:
                     kml_content = utils.geometry_to_kml(
                         results['geometry'],
-                        name=f"{results['selected_VI']} AOI",
+                        name=f"{results['selected_vi']} AOI",
                         description=f"Area of Interest for {results['selected_vi']} analysis on {results['item_date']}"
                     )
                     
