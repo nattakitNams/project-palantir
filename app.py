@@ -105,7 +105,8 @@ coord_input = st.text_area(
     "AOI Coordinates (WKT or GeoJSON):",
     value=st.session_state.aoi_wkt,
     placeholder="Example: POLYGON ((100.5 13.7, 100.6 13.7, 100.6 13.8, 100.5 13.8, 100.5 13.7))",
-    height=80
+    height=80,
+    key="coord_text_area"
 )
 
 # KML File Upload
@@ -115,16 +116,23 @@ uploaded_kml = st.file_uploader(
     help="Upload a KML file containing your area of interest"
 )
 
+# Show success message if just uploaded
+if 'uploaded_kml_name' in st.session_state and st.session_state.uploaded_kml_name:
+    st.success(f"✓ KML file '{st.session_state.uploaded_kml_name}' loaded successfully!")
+    st.session_state.uploaded_kml_name = None  # Clear after showing
+
 if uploaded_kml is not None:
     try:
         kml_content = uploaded_kml.read()
         geometry = utils.parse_kml_to_geometry(kml_content)
         if geometry:
+            # Update geometry
             st.session_state.current_geometry = geometry
-            # Update WKT display
+            # Convert to WKT and update
             from shapely.geometry import shape
             shp = shape(geometry)
-            st.session_state.aoi_wkt = shp.wkt
+            wkt_str = shp.wkt
+            st.session_state.aoi_wkt = wkt_str
             # Store filename for display after rerun
             st.session_state.uploaded_kml_name = uploaded_kml.name
             st.rerun()  # Rerun to update text area with coordinates
@@ -133,12 +141,7 @@ if uploaded_kml is not None:
     except Exception as e:
         st.error(f"Error reading KML file: {e}")
 
-# Show success message if just uploaded
-if 'uploaded_kml_name' in st.session_state and st.session_state.uploaded_kml_name:
-    st.success(f"✓ KML file '{st.session_state.uploaded_kml_name}' loaded successfully!")
-    st.session_state.uploaded_kml_name = None  # Clear after showing
-
-# Parse coordinates if changed
+# Parse coordinates if manually changed
 if coord_input != st.session_state.aoi_wkt:
     st.session_state.aoi_wkt = coord_input
     if coord_input.strip():
