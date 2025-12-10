@@ -98,15 +98,14 @@ if 'current_geometry' not in st.session_state:
     st.session_state.current_geometry = None
 
 st.write("### 1. Define Area of Interest (AOI)")
-st.info("**Method 1**: Paste WKT/GeoJSON coordinates | **Method 2**: Draw on map | **Method 3**: Upload KML file")
+st.info("**Method 1**: Paste WKT/GeoJSON coordinates below | **Method 2**: Draw on the map | **Method 3**: Upload KML file")
 
 # Prominent text input for coordinates
 coord_input = st.text_area(
     "AOI Coordinates (WKT or GeoJSON):",
     value=st.session_state.aoi_wkt,
     placeholder="Example: POLYGON ((100.5 13.7, 100.6 13.7, 100.6 13.8, 100.5 13.8, 100.5 13.7))",
-    height=80,
-    key="coord_text_area"
+    height=80
 )
 
 # KML File Upload
@@ -116,32 +115,17 @@ uploaded_kml = st.file_uploader(
     help="Upload a KML file containing your area of interest"
 )
 
-# Show success message if just uploaded
-if 'uploaded_kml_name' in st.session_state and st.session_state.uploaded_kml_name:
-    st.success(f"✓ KML file '{st.session_state.uploaded_kml_name}' loaded successfully!")
-    st.session_state.uploaded_kml_name = None  # Clear after showing
-
 if uploaded_kml is not None:
-    try:
-        kml_content = uploaded_kml.read()
-        geometry = utils.parse_kml_to_geometry(kml_content)
-        if geometry:
-            # Update geometry
-            st.session_state.current_geometry = geometry
-            # Convert to WKT and update
-            from shapely.geometry import shape
-            shp = shape(geometry)
-            wkt_str = shp.wkt
-            st.session_state.aoi_wkt = wkt_str
-            # Store filename for display after rerun
-            st.session_state.uploaded_kml_name = uploaded_kml.name
-            st.rerun()  # Rerun to update text area with coordinates
-        else:
-            st.error("Could not parse KML file. Please check the file format.")
-    except Exception as e:
-        st.error(f"Error reading KML file: {e}")
+    kml_content = uploaded_kml.read()
+    geometry = utils.parse_kml_to_geometry(kml_content)
+    if geometry:
+        from shapely.geometry import shape
+        shp = shape(geometry)
+        st.session_state.aoi_wkt = shp.wkt
+        st.session_state.current_geometry = geometry
+        st.rerun()
 
-# Parse coordinates if manually changed
+# Parse coordinates if changed
 if coord_input != st.session_state.aoi_wkt:
     st.session_state.aoi_wkt = coord_input
     if coord_input.strip():
