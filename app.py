@@ -107,17 +107,28 @@ uploaded_kml = st.file_uploader(
     help="Upload a KML file containing your area of interest"
 )
 
+# Process uploaded KML and show Apply button
 if uploaded_kml is not None:
     kml_content = uploaded_kml.read()
     geometry = utils.parse_kml_to_geometry(kml_content)
     if geometry:
         from shapely.geometry import shape
         shp = shape(geometry)
-        st.session_state.aoi_wkt = shp.wkt
-        st.session_state.current_geometry = geometry
-        st.success(f"✓ Loaded '{uploaded_kml.name}' - coordinates updated below")
+        # Store temporarily
+        st.session_state.temp_kml_wkt = shp.wkt
+        st.session_state.temp_kml_geometry = geometry
+        
+        # Show success and Apply button
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.success(f"✓ Loaded '{uploaded_kml.name}' successfully!")
+        with col2:
+            if st.button("Apply Coordinates", type="primary", use_container_width=True):
+                st.session_state.aoi_wkt = st.session_state.temp_kml_wkt
+                st.session_state.current_geometry = st.session_state.temp_kml_geometry
+                st.rerun()
 
-# Text input for coordinates (shows updated value from KML)
+# Text input for coordinates (shows updated value from Apply)
 coord_input = st.text_area(
     "AOI Coordinates (WKT or GeoJSON):",
     value=st.session_state.aoi_wkt,
