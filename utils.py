@@ -557,3 +557,55 @@ def geometry_to_kml(geometry, name="AOI Boundary", description="Area of Interest
     except Exception as e:
         print(f"Error creating KML: {e}")
         return None
+
+
+def geometry_to_shapefile(geometry, name="boundary"):
+    """
+    Convert GeoJSON geometry to Shapefile (as ZIP)
+    
+    Parameters:
+    -----------
+    geometry : dict
+        GeoJSON geometry dictionary
+    name : str
+        Name for the shapefile
+        
+    Returns:
+    --------
+    io.BytesIO
+        ZIP file containing shapefile components (.shp, .shx, .dbf, .prj)
+    """
+    import geopandas as gpd
+    from shapely.geometry import shape
+    import tempfile
+    import os
+    import zipfile
+    
+    try:
+        # Convert to Shapely geometry
+        geom = shape(geometry)
+        
+        # Create GeoDataFrame
+        gdf = gpd.GeoDataFrame({'name': [name], 'geometry': [geom]}, crs='EPSG:4326')
+        
+        # Create temporary directory
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Save shapefile
+            shp_path = os.path.join(tmpdir, f"{name}.shp")
+            gdf.to_file(shp_path)
+            
+            # Create ZIP file
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                # Add all shapefile components
+                for ext in ['.shp', '.shx', '.dbf', '.prj', '.cpg']:
+                    file_path = os.path.join(tmpdir, f"{name}{ext}")
+                    if os.path.exists(file_path):
+                        zipf.write(file_path, f"{name}{ext}")
+            
+            zip_buffer.seek(0)
+            return zip_buffer
+            
+    except Exception as e:
+        print(f"Error creating Shapefile: {e}")
+        return None

@@ -123,7 +123,23 @@ if uploaded_kml is not None:
         with col1:
             st.success(f"✓ Loaded '{uploaded_kml.name}' successfully!")
         with col2:
-            if st.button("Apply Coordinates", type="primary", use_container_width=True):
+            # Custom CSS for light green button
+            st.markdown("""
+            <style>
+            div[data-testid="stButton"] > button[kind="secondary"] {
+                background-color: #90EE90 !important;
+                color: #1e4620 !important;
+                border: 1px solid #70d070 !important;
+                font-size: 0.9rem !important;
+            }
+            div[data-testid="stButton"] > button[kind="secondary"]:hover {
+                background-color: #7fd77f !important;
+                border: 1px solid #5fc05f !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
+            if st.button("Apply Coordinates", key="apply_kml_btn", use_container_width=True):
                 st.session_state.aoi_wkt = st.session_state.temp_kml_wkt
                 st.session_state.current_geometry = st.session_state.temp_kml_geometry
                 st.rerun()
@@ -508,6 +524,31 @@ if st.session_state.analysis_results:
                         st.error("Could not generate KML file.")
                 else:
                     st.warning("No geometry available for KML export.")
+            
+            # 6. Shapefile Export
+            with st.container():
+                st.markdown("##### 6. Shapefile Export")
+                st.caption("Download polygon boundary as Shapefile (ZIP) for GIS software")
+                
+                if 'geometry' in results and results['geometry']:
+                    shp_buffer = utils.geometry_to_shapefile(
+                        results['geometry'],
+                        name=f"boundary_{results['selected_vi']}"
+                    )
+                    
+                    if shp_buffer:
+                        st.download_button(
+                            label="Download Shapefile (ZIP)",
+                            data=shp_buffer,
+                            file_name=f'boundary_{results["selected_vi"]}_{results["item_date"]}.zip',
+                            mime='application/zip',
+                            key=f'dl_shp_{key_suffix}',
+                            use_container_width=True
+                        )
+                    else:
+                        st.error("Could not generate Shapefile.")
+                else:
+                    st.warning("No geometry available for Shapefile export.")
 
 
 
