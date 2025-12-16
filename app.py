@@ -100,17 +100,9 @@ if 'current_geometry' not in st.session_state:
 st.write("### 1. Define Area of Interest (AOI)")
 st.info("**Method 1**: Paste WKT/GeoJSON coordinates below | **Method 2**: Draw on the map | **Method 3**: Upload KML file")
 
-# Prominent text input for coordinates
-coord_input = st.text_area(
-    "AOI Coordinates (WKT or GeoJSON):",
-    value=st.session_state.aoi_wkt,
-    placeholder="Example: POLYGON ((100.5 13.7, 100.6 13.7, 100.6 13.8, 100.5 13.8, 100.5 13.7))",
-    height=80
-)
-
-# KML File Upload
+# KML File Upload (process BEFORE text area)
 uploaded_kml = st.file_uploader(
-    "Or upload KML file",
+    "Upload KML file (optional)",
     type=['kml'],
     help="Upload a KML file containing your area of interest"
 )
@@ -123,7 +115,15 @@ if uploaded_kml is not None:
         shp = shape(geometry)
         st.session_state.aoi_wkt = shp.wkt
         st.session_state.current_geometry = geometry
-        st.rerun()
+        st.success(f"✓ Loaded '{uploaded_kml.name}' - coordinates updated below")
+
+# Text input for coordinates (shows updated value from KML)
+coord_input = st.text_area(
+    "AOI Coordinates (WKT or GeoJSON):",
+    value=st.session_state.aoi_wkt,
+    placeholder="Example: POLYGON ((100.5 13.7, 100.6 13.7, 100.6 13.8, 100.5 13.8, 100.5 13.7))",
+    height=80
+)
 
 # Parse coordinates if changed
 if coord_input != st.session_state.aoi_wkt:
