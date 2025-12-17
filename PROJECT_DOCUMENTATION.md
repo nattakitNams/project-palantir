@@ -424,11 +424,11 @@ def geometry_to_shapefile(geometry, name):
 ┌─────────────────────────────────────────────────────────────┐
 │              External Services & Libraries                  │
 │  ┌──────────────────┐  ┌─────────────────────────────────┐  │
-│  │Microsoft         │  │ Processing Libraries:            │ │
-│  │Planetary Computer│  │ • rioxarray (band loading)       │ │
-│  │STAC API          │  │ • geopandas (spatial operations) │ │
-│  │ (Sentinel-2)     │  │ • xarray (data manipulation)     │ │
-│  └──────────────────┘  │ • matplotlib (visualization)     │ │
+│  │Microsoft         │  │ Processing Libraries:           │  │
+│  │Planetary Computer│  │ • rioxarray (band loading)      │  │
+│  │STAC API          │  │ • geopandas (spatial operations)│  │
+│  │ (Sentinel-2)     │  │ • xarray (data manipulation)    │  │
+│  └──────────────────┘  │ • matplotlib (visualization)    │  │
 │                        └─────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
